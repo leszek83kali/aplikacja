@@ -7,30 +7,39 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2022   # stabilny runner
+    runs-on: windows-2022
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node 18 (stabilne z electron-builder 24)
+      # Node 18 + czysty cache electron-buildera
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      # Fix na "ERR_ELECTRON_BUILDER_CANNOT_EXECUTE" – czyścimy cache buildera
       - name: Clear electron-builder cache
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "$env:LOCALAPPDATA\electron-builder" -ErrorAction SilentlyContinue
           Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\electron-builder" -ErrorAction SilentlyContinue
 
-      # NSIS bywa wymagany na Windows – doinstalujmy go z Chocolatey
+      # Stabilne wersje narzędzi jako devDependencies (lokalne)
+      - name: Pin tool versions
+        run: |
+          npm install --save-dev ^
+            electron@30.0.8 ^
+            electron-builder@24.13.3 ^
+            @develar/app-builder-bin@4.0.0 ^
+            7zip-bin@5.2.0
+          npm install --legacy-peer-deps
+
+      # NSIS bywa wymagany na Windows – doinstaluj jawnie
       - name: Install NSIS
         run: choco install nsis -y
 
-      - name: Install deps
-        run: npm install --legacy-peer-deps
-
+      # Właściwy build (bez publikacji do Releases)
       - name: Build EXE (NSIS)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
