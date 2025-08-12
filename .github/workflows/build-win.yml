@@ -18,31 +18,21 @@ jobs:
         with:
           node-version: '18'
 
-      # czyścimy cache electron-buildera (na wszelki)
+      # wyczyść cache electron-buildera (naprawia "CANNOT_EXECUTE")
       - name: Clear electron-builder cache
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "$env:LOCALAPPDATA\electron-builder" -ErrorAction SilentlyContinue
           Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\electron-builder" -ErrorAction SilentlyContinue
 
-      # instalujemy stabilne wersje narzędzi - UWAGA: shell=cmd
-      - name: Pin tool versions
-        shell: cmd
-        run: >
-          npm install --no-audit --no-fund --legacy-peer-deps --save-dev
-          electron@30.0.8 electron-builder@24.13.3
-          "@develar/app-builder-bin@4.0.0" 7zip-bin@5.2.0
-
-      - name: Install NSIS
-        run: choco install nsis -y
-
       - name: Install deps
         run: npm install --no-audit --no-fund --legacy-peer-deps
 
-      - name: Build EXE (NSIS)
+      # najprościej: build "portable" (EXE bez instalatora, działa od razu)
+      - name: Build EXE (portable)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win nsis --publish never
+        run: npx electron-builder --win portable --publish never
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
