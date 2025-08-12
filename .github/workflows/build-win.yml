@@ -17,22 +17,13 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Show files (debug)
-        run: |
-          dir
-          dir web
-          if exist ".github\workflows" dir ".github\workflows"
-
       - name: Install deps
-        run: |
-          npm config set fund false
-          npm config set audit false
-          npm install --legacy-peer-deps
+        run: npm install --legacy-peer-deps
 
       - name: Build EXE (NSIS)
         run: npx electron-builder -w nsis
         env:
-          GH_TOKEN: ${{ github.token }}  # nie publikuje, tylko pozwala builderowi działać
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
