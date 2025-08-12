@@ -13,33 +13,32 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # Node 18 + czysty cache electron-buildera
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
+      # czyścimy cache electron-buildera (na wszelki)
       - name: Clear electron-builder cache
         shell: pwsh
         run: |
           Remove-Item -Recurse -Force "$env:LOCALAPPDATA\electron-builder" -ErrorAction SilentlyContinue
           Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\electron-builder" -ErrorAction SilentlyContinue
 
-      # Stabilne wersje narzędzi jako devDependencies (lokalne)
+      # instalujemy stabilne wersje narzędzi - UWAGA: shell=cmd
       - name: Pin tool versions
-        run: |
-          npm install --save-dev ^
-            electron@30.0.8 ^
-            electron-builder@24.13.3 ^
-            @develar/app-builder-bin@4.0.0 ^
-            7zip-bin@5.2.0
-          npm install --legacy-peer-deps
+        shell: cmd
+        run: >
+          npm install --no-audit --no-fund --legacy-peer-deps --save-dev
+          electron@30.0.8 electron-builder@24.13.3
+          "@develar/app-builder-bin@4.0.0" 7zip-bin@5.2.0
 
-      # NSIS bywa wymagany na Windows – doinstaluj jawnie
       - name: Install NSIS
         run: choco install nsis -y
 
-      # Właściwy build (bez publikacji do Releases)
+      - name: Install deps
+        run: npm install --no-audit --no-fund --legacy-peer-deps
+
       - name: Build EXE (NSIS)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
