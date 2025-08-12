@@ -7,7 +7,9 @@ on:
 
 jobs:
   build:
-    runs-on: windows-2022
+    runs-on: ubuntu-latest
+    # Oficjalny obraz electron-builder z Wine do budowy Windows EXE na Linuksie
+    container: electronuserland/builder:wine
 
     steps:
       - name: Checkout
@@ -16,23 +18,17 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
-
-      # wyczyść cache electron-buildera (naprawia "CANNOT_EXECUTE")
-      - name: Clear electron-builder cache
-        shell: pwsh
-        run: |
-          Remove-Item -Recurse -Force "$env:LOCALAPPDATA\electron-builder" -ErrorAction SilentlyContinue
-          Remove-Item -Recurse -Force "$env:USERPROFILE\.cache\electron-builder" -ErrorAction SilentlyContinue
+          node-version: 18
 
       - name: Install deps
-        run: npm install --no-audit --no-fund --legacy-peer-deps
+        run: |
+          npm ci || npm install --no-audit --no-fund --legacy-peer-deps
 
-      # najprościej: build "portable" (EXE bez instalatora, działa od razu)
-      - name: Build EXE (portable)
+      # Budowa instalatora .exe (NSIS) bez publikacji do Releases
+      - name: Build EXE (NSIS)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npx electron-builder --win portable --publish never
+        run: npx electron-builder --win nsis --publish never
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
