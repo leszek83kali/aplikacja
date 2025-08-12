@@ -1,0 +1,40 @@
+{
+  "name": "rejestr-nadgodzin-electron",
+  "productName": "Rejestr Nadgodzin",
+  "version": "1.0.0",
+  "description": "Offline rejestr nadgodzin — instalator EXE (Windows).",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder -w nsis"
+  },
+  "build": {
+    "appId": "pl.twojaorganizacja.nadgodziny",
+    "asar": true,
+    "files": [
+      "web/**",
+      "main.js",
+      "icon.png"
+    ],
+    "directories": {
+      "buildResources": "."
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ],
+      "artifactName": "Rejestr-Nadgodzin-${version}-win.exe",
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": false
+    }
+  },
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.3"
+  }
+}

@@ -1,0 +1,250 @@
+<!doctype html><html lang="pl"><head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Rejestr nadgodzin — offline (v9)</title>
+<link rel="icon" href="data:," />
+<style>
+:root{ --bg:#0b1020; --muted:#8ea0c2; --text:#eaf0ff; --accent:#3b82f6; --ring:rgba(59,130,246,.35); }
+*{ box-sizing:border-box; } html,body{ height:100%; }
+body{ margin:0; font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial;
+  background: radial-gradient(1200px 900px at 80% 10%, #16224a 0%, transparent 60%), radial-gradient(800px 600px at 10% 100%, #1b2a5c 0%, transparent 60%), var(--bg);
+  color:var(--text);
+}
+.container{ max-width:1100px; margin:0 auto; padding:24px; }
+header{ display:flex; align-items:center; gap:16px; justify-content:space-between; margin-bottom:16px; }
+.brand{ display:flex; align-items:center; gap:12px; }
+.logo{ width:56px; height:40px; border-radius:10px; display:grid; place-items:center; background:#0e1530; border:1px solid rgba(255,255,255,.14); padding:4px 8px; }
+.logo img{ max-width:100%; max-height:100%; display:block; object-fit:contain; }
+h1{ font-size:20px; margin:0; letter-spacing:.2px; }
+.ver{ font-size:12px; color:#9fb3e8; margin-left:8px; }
+.card{ background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02)); border:1px solid rgba(255,255,255,.08); border-radius:16px; padding:18px; }
+.row{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+.row-3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px; }
+.stack{ display:flex; flex-direction:column; gap:10px; }
+input,select{ width:100%; padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.12); background:#0e1530; color:var(--text); outline:none; }
+input:focus, select:focus{ border-color:var(--ring); box-shadow:0 0 0 4px var(--ring); }
+.btn{ border:none; padding:10px 14px; border-radius:12px; cursor:pointer; color:white; font-weight:600; background:linear-gradient(135deg, var(--accent), #2563eb); }
+.btn.secondary{ background:#1f2a4d; border:1px solid rgba(255,255,255,.08); }
+.btn.ok{ background:linear-gradient(135deg, #10b981, #059669); } .btn.warn{ background:linear-gradient(135deg, #ef4444, #b91c1c); }
+.toolbar{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; } .right{ margin-left:auto; }
+.muted{ color:var(--muted); font-size:12px; }
+.pill{ display:inline-flex; gap:6px; padding:4px 10px; border-radius:999px; font-weight:700; font-size:12px; }
+.pill.ok{ background:rgba(16,185,129,.16); color:#34d399; border:1px solid rgba(16,185,129,.25); }
+.pill.bad{ background:rgba(239,68,68,.16); color:#f87171; border:1px solid rgba(239,68,68,.25); }
+.pill.pending{ background:rgba(245,158,11,.16); color:#fbbf24; border:1px solid rgba(245,158,11,.25); }
+table{ width:100%; border-collapse:separate; border-spacing:0 8px; } th,td{ text-align:left; padding:10px 12px; font-size:14px; word-break:break-word; }
+tbody tr{ background:#0e1530; border:1px solid rgba(255,255,255,.08); }
+tbody tr td:first-child{ border-top-left-radius:12px; border-bottom-left-radius:12px; }
+tbody tr td:last-child{ border-top-right-radius:12px; border-bottom-right-radius:12px; }
+.emp-list{ display:grid; grid-template-columns: repeat(auto-fill, minmax(220px,1fr)); gap:10px; }
+.emp-item{ color:#fff; display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-radius:12px; background:#0e1530; border:1px solid rgba(255,255,255,.12); cursor:pointer; }
+.emp-item strong, .emp-item span{ color:#fff; }
+.emp-item:hover{ border-color:var(--ring); }
+.emp-item span{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; opacity:.95; }
+.cal{ background:#0e1530; border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:10px; }
+.cal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.cal-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; }
+.cal-cell{ text-align:center; padding:8px 0; border-radius:10px; cursor:pointer; user-select:none; }
+.cal-cell.head{ font-size:12px; color:var(--muted); cursor:default; }
+.cal-cell.muted{ color:#9aa7c2; opacity:.6; } .cal-cell.today{ outline:2px solid rgba(59,130,246,.6); }
+.cal-cell.sel{ background:#2563eb; }
+.rcal{ background:#0e1530; border:1px solid rgba(255,255,255,.12); border-radius:14px; padding:10px; }
+.rcal-wrap{ display:grid; grid-template-columns: 1fr 1fr; gap:10px; }
+.rcal .cal-cell.inrange{ background:#1f3f88; }
+.hidden{ display:none !important; } .footer{ margin-top:18px; color:var(--muted); font-size:12px; text-align:center; }
+/* Mobile tweaks */
+@supports (padding: max(0px)){ .container{ padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); } }
+@media (max-width: 680px){
+  .container{ padding: 12px; }
+  .card{ padding:14px; border-radius:14px; box-shadow: 0 8px 22px rgba(0,0,0,.28); }
+  header{ gap:12px; }
+  input[type="text"],input[type="password"],input[type="number"],input[type="date"],select,textarea,.btn{ font-size:16px; }
+  .btn{ padding:14px 16px; }
+  #empTable thead, #mgrTable thead{ display:none; }
+  #empTable tbody tr, #mgrTable tbody tr{ display:block; padding:10px; border-radius:12px; }
+  #empTable tbody tr td, #mgrTable tbody tr td{ display:flex; justify-content:space-between; align-items:center; gap:12px; border:none; padding:6px 0; }
+  #empTable tbody tr td::before, #mgrTable tbody tr td::before{ content: attr(data-label); color: var(--muted); font-weight:600; }
+  #empTable tbody tr td:last-child, #mgrTable tbody tr td:last-child{ padding-top:10px; }
+  .toolbar .right{ width:100%; display:flex; justify-content:flex-end; }
+}
+</style></head>
+<body>
+<div class="container">
+<header class="no-print">
+  <div class="brand"><div class="logo"><img src="./logo.png" alt="Logo"/></div>
+    <h1>Rejestr nadgodzin <span class="muted">(offline)</span> <span class="ver">v9</span></h1></div>
+  <div class="toolbar" id="userBar"><span id="whoami" class="muted"></span><button class="btn secondary" id="logoutBtn">Wyloguj</button></div>
+</header>
+
+<section id="view-login" class="card">
+  <div class="toolbar" style="margin-bottom:12px">
+    <button id="tab-emp" class="btn pending" aria-pressed="true">Pracownik</button>
+    <button id="tab-mgr" class="btn secondary" aria-pressed="false">Przełożony</button>
+  </div>
+  <div id="login-emp" class="stack">
+    <label for="empId">Zaloguj się numerem ID (6 cyfr)</label>
+    <div class="row"><input id="empId" inputmode="numeric" maxlength="6" pattern="\d{6}" placeholder="np. 123456" />
+      <button id="empLoginBtn" class="btn">Wejdź</button></div>
+    <p class="muted">Możesz też kliknąć osobę z listy.</p>
+    <div class="stack"><label>Lista pracowników (17 osób):</label>
+      <div id="empList" class="emp-list">
+        <button class="emp-item" data-id="100101" title="100101"><strong>Anna Kowalska</strong><span>100101</span></button>
+        <button class="emp-item" data-id="100102" title="100102"><strong>Jan Nowak</strong><span>100102</span></button>
+        <button class="emp-item" data-id="100103" title="100103"><strong>Piotr Zieliński</strong><span>100103</span></button>
+        <button class="emp-item" data-id="100104" title="100104"><strong>Katarzyna Wiśniewska</strong><span>100104</span></button>
+        <button class="emp-item" data-id="100105" title="100105"><strong>Tomasz Wójcik</strong><span>100105</span></button>
+        <button class="emp-item" data-id="100106" title="100106"><strong>Agnieszka Lewandowska</strong><span>100106</span></button>
+        <button class="emp-item" data-id="100107" title="100107"><strong>Michał Kamiński</strong><span>100107</span></button>
+        <button class="emp-item" data-id="100108" title="100108"><strong>Ewa Szymańska</strong><span>100108</span></button>
+        <button class="emp-item" data-id="100109" title="100109"><strong>Paweł Woźniak</strong><span>100109</span></button>
+        <button class="emp-item" data-id="100110" title="100110"><strong>Karolina Dąbrowska</strong><span>100110</span></button>
+        <button class="emp-item" data-id="100111" title="100111"><strong>Marcin Kozłowski</strong><span>100111</span></button>
+        <button class="emp-item" data-id="100112" title="100112"><strong>Magdalena Jankowska</strong><span>100112</span></button>
+        <button class="emp-item" data-id="100113" title="100113"><strong>Krzysztof Mazur</strong><span>100113</span></button>
+        <button class="emp-item" data-id="100114" title="100114"><strong>Joanna Krawczyk</strong><span>100114</span></button>
+        <button class="emp-item" data-id="100115" title="100115"><strong>Łukasz Piątek</strong><span>100115</span></button>
+        <button class="emp-item" data-id="100116" title="100116"><strong>Natalia Pawlak</strong><span>100116</span></button>
+        <button class="emp-item" data-id="100117" title="100117"><strong>Rafał Kaczmarek</strong><span>100117</span></button>
+      </div>
+    </div>
+  </div>
+  <div id="login-mgr" class="stack hidden">
+    <label for="mgrPin">Tryb przełożonego (PIN: 1234)</label>
+    <div class="row"><input id="mgrPin" type="password" inputmode="numeric" maxlength="6" placeholder="PIN" />
+      <button id="mgrLoginBtn" class="btn">Wejdź</button></div>
+  </div>
+</section>
+
+<section id="view-emp" class="hidden">
+  <div class="card stack" style="margin-bottom:16px">
+    <div class="toolbar"><h2 style="margin:0">Dodaj nadgodziny</h2>
+      <span class="right muted">Pracownik: <strong id="empIdLabel">—</strong></span></div>
+    <div class="row-3">
+      <div class="stack"><label for="otDate">Dzień</label><input type="date" id="otDate" /><div id="cal" class="cal"></div></div>
+      <div class="stack"><label for="otHours">Liczba godzin</label><input type="number" id="otHours" min="0.25" step="0.25" max="24" placeholder="np. 2" /></div>
+      <div class="stack"><label for="otDesc">Powód (krótko)</label><input type="text" id="otDesc" maxlength="120" placeholder="np. awaria, zamknięcie projektu…" /></div>
+    </div>
+    <div class="toolbar"><button id="addOTBtn" class="btn">Zapisz wniosek</button><span id="empMsg" class="muted"></span>
+      <div class="right"><button id="empExportBtn" class="btn secondary">Eksportuj do PDF</button></div></div>
+  </div>
+
+  <div class="card">
+    <div class="toolbar"><h2 style="margin:0">Moje wnioski</h2></div>
+    <div class="stack">
+      <table id="empTable"><thead><tr><th>Data</th><th>Godzin</th><th>Powód</th><th>Status</th><th class="no-print">Akcja</th></tr></thead><tbody></tbody></table>
+      <p id="empEmpty" class="muted" style="margin:8px 2px">Brak wniosków.</p>
+    </div>
+  </div>
+</section>
+
+<section id="view-mgr" class="hidden">
+  <div class="card stack" style="margin-bottom:16px">
+    <div class="toolbar"><h2 style="margin:0">Zestawienie i akceptacje</h2></div>
+    <div class="row-3">
+      <div class="stack"><label for="fEmpId">Filtr: ID pracownika</label><input id="fEmpId" placeholder="np. 123456" /></div>
+      <div class="stack"><label for="fStatus">Status</label><select id="fStatus">
+        <option value="ALL">Wszystkie</option><option value="PENDING">Oczekujące</option><option value="APPROVED">Zatwierdzone</option><option value="REJECTED">Odrzucone</option>
+      </select></div>
+      <div class="stack"><label>Zakres dat</label>
+        <div class="row"><input id="fFrom" type="date" /><input id="fTo" type="date" /></div>
+        <div class="toolbar"><button id="toggleRangeCal" class="btn secondary">Kalendarz zakresu</button><button id="clearRange" class="btn secondary">Wyczyść zakres</button></div>
+      </div>
+    </div>
+    <div id="rangeCalWrap" class="rcal hidden"><div class="rcal-wrap"><div id="rcalA"></div><div id="rcalB"></div></div>
+      <p class="muted">Wybierz dzień początkowy i końcowy — zakres uzupełni się automatycznie.</p></div>
+    <div class="toolbar"><button id="applyFiltersBtn" class="btn secondary">Zastosuj filtry</button>
+      <div class="right"><button id="mgrExportBtn" class="btn secondary">Eksportuj do PDF</button></div></div>
+  </div>
+  <div class="card"><div class="stack">
+    <table id="mgrTable"><thead><tr><th>ID</th><th>Imię i nazwisko</th><th>Data</th><th>Godzin</th><th>Powód</th><th>Status</th><th class="no-print">Akcja</th></tr></thead><tbody></tbody></table>
+    <p id="mgrEmpty" class="muted" style="margin:8px 2px">Brak pozycji w bieżącym widoku.</p>
+  </div></div>
+</section>
+
+<p class="footer no-print">Dane lokalne (localStorage). <strong>Wersja interfejsu: v9</strong></p>
+</div>
+<iframe id="pdfFrame" class="hidden"></iframe>
+<script>
+;(function(){
+  const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>Array.from(r.querySelectorAll(s));
+  const STORAGE_KEY='ot_entries_v1';
+  const EMPLOYEES={'100101':'Anna Kowalska', '100102':'Jan Nowak', '100103':'Piotr Zieliński', '100104':'Katarzyna Wiśniewska', '100105':'Tomasz Wójcik', '100106':'Agnieszka Lewandowska', '100107':'Michał Kamiński', '100108':'Ewa Szymańska', '100109':'Paweł Woźniak', '100110':'Karolina Dąbrowska', '100111':'Marcin Kozłowski', '100112':'Magdalena Jankowska', '100113':'Krzysztof Mazur', '100114':'Joanna Krawczyk', '100115':'Łukasz Piątek', '100116':'Natalia Pawlak', '100117':'Rafał Kaczmarek'};
+
+  const State={user:null, entries:[]};
+  const todayYMD=()=>{ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); };
+  const formatDate=(iso)=>{ const d=new Date(iso+'T00:00:00'); return isNaN(d)?iso:d.toLocaleDateString('pl-PL',{year:'numeric',month:'2-digit',day:'2-digit'}); };
+  const load=()=>{ try{State.entries=JSON.parse(localStorage.getItem(STORAGE_KEY)||'[]');}catch(e){State.entries=[];} };
+  const save=()=>localStorage.setItem(STORAGE_KEY, JSON.stringify(State.entries));
+  const uuid=()=> (crypto&&crypto.randomUUID)?crypto.randomUUID():'id-'+Math.random().toString(36).slice(2)+Date.now();
+  const empName=(id)=>EMPLOYEES[id]||'';
+
+  function setView(v){ $('#view-login').classList.toggle('hidden', v!=='login'); $('#view-emp').classList.toggle('hidden', v!=='emp'); $('#view-mgr').classList.toggle('hidden', v!=='mgr'); $('#userBar').classList.toggle('hidden', v==='login'); }
+  function setWho(){ const el=$('#whoami'); if(!State.user){el.textContent='';return;} el.textContent = State.user.role==='emp' ? `Zalogowano jako pracownik (ID ${State.user.id})` : 'Zalogowano jako przełożony'; }
+  const validateEmpId=(id)=>/^\d{6}$/.test((id||'').trim());
+
+  function addEntry({employeeId,date,hours,description}){ const e={id:uuid(),employeeId,date,hours:Number(hours),description:(description||'').trim(),status:'PENDING',submittedAt:new Date().toISOString()}; State.entries.push(e); save(); return e; }
+  function updateStatus(id,st){ const i=State.entries.findIndex(e=>e.id===id); if(i<0)return false; State.entries[i].status=st; State.entries[i].reviewedAt=new Date().toISOString(); save(); return true; }
+  function deleteEntry(id,by){ const i=State.entries.findIndex(e=>e.id===id && e.employeeId===by && e.status==='PENDING'); if(i<0)return false; State.entries.splice(i,1); save(); return true; }
+  function filterEntries({empId=null,status='ALL',from=null,to=null}){
+    let list=[...State.entries];
+    if(empId) list=list.filter(e=>e.employeeId===empId);
+    if(status!=='ALL') list=list.filter(e=>e.status===status);
+    if(from) list=list.filter(e=>(e.date||'')>=from);
+    if(to) list=list.filter(e=>(e.date||'')<=to);
+    list.sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.submittedAt||'').localeCompare(a.submittedAt||''));
+    return list;
+  }
+  const sumHours=(list)=>list.reduce((a,e)=>a+(Number(e.hours)||0),0);
+
+  function statusPill(s){ const map={PENDING:['Oczekujące','pending'],APPROVED:['Zatwierdzone','ok'],REJECTED:['Odrzucone','bad']}; const [t,c]=map[s]||[s,'pending']; return `<span class="pill ${c}">${t}</span>`; }
+  const esc=(str)=>String(str||'').replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+
+  function renderEmp(){ $('#empIdLabel').textContent = State.user?.id ? `${State.user.id} • ${empName(State.user.id)}` : '—'; const rows=filterEntries({empId:State.user.id}).map(e=>`<tr><td data-label="Data">${formatDate(e.date)}</td><td data-label="Godzin">${e.hours.toFixed(2)}</td><td data-label="Powód">${esc(e.description)}</td><td data-label="Status">${statusPill(e.status)}</td><td class="no-print" data-label="Akcja">${e.status==='PENDING'?`<button class="btn secondary btn-del" data-id="${e.id}">Usuń</button>`:''}</td></tr>`).join(''); $('#empTable tbody').innerHTML=rows||''; $('#empEmpty').classList.toggle('hidden', !!rows); $$('#empTable .btn-del').forEach(b=>b.onclick=()=>{ if(confirm('Usunąć wniosek (tylko oczekujące)?')){ if(!deleteEntry(b.dataset.id, State.user.id)) alert('Nie można usunąć.'); renderEmp(); } }); }
+
+  function renderMgr(){ const empId=$('#fEmpId').value.trim(); const status=$('#fStatus').value; const from=$('#fFrom').value||null; const to=$('#fTo').value||null; const list=filterEntries({empId,status,from,to}); const rows=list.map(e=>`<tr><td data-label="ID"><code>${e.employeeId}</code></td><td data-label="Imię i nazwisko">${esc(empName(e.employeeId))}</td><td data-label="Data">${formatDate(e.date)}</td><td data-label="Godzin">${e.hours.toFixed(2)}</td><td data-label="Powód">${esc(e.description)}</td><td data-label="Status">${statusPill(e.status)}</td><td class="no-print" data-label="Akcja"><div class="toolbar"><button class="btn ok btn-a" data-id="${e.id}">Zatwierdź</button><button class="btn warn btn-r" data-id="${e.id}">Odrzuć</button></div></td></tr>`).join(''); $('#mgrTable tbody').innerHTML=rows||''; $('#mgrEmpty').classList.toggle('hidden', !!rows); $$('#mgrTable .btn-a').forEach(b=>b.onclick=()=>{updateStatus(b.dataset.id,'APPROVED'); renderMgr();}); $$('#mgrTable .btn-r').forEach(b=>b.onclick=()=>{updateStatus(b.dataset.id,'REJECTED'); renderMgr();}); }
+
+  function exportToPDF(entries,title){ const total=sumHours(entries); const now=new Date(); const header=`${title} — wygenerowano ${now.toLocaleString('pl-PL')}`; const rows=entries.map(e=>`<tr><td>${e.employeeId}</td><td>${esc(empName(e.employeeId))}</td><td>${formatDate(e.date)}</td><td style="text-align:right">${Number(e.hours).toFixed(2)}</td><td>${esc(e.description)}</td><td>${({PENDING:'Oczekujące',APPROVED:'Zatwierdzone',REJECTED:'Odrzucone'})[e.status]||e.status}</td></tr>`).join(''); const html=`<!doctype html><html lang="pl"><head><meta charset="utf-8"><title>PDF</title><style>body{font-family:system-ui,Arial,sans-serif;margin:20px}h2{margin:0 0 8px}.muted{color:#555;font-size:12px;margin-bottom:12px}table{width:100%;border-collapse:collapse}th,td{border:1px solid #222;padding:6px 8px;font-size:12px}th{background:#eee;text-align:left}tfoot td{font-weight:700}</style></head><body><h2>${esc(title)}</h2><div class="muted">${esc(header)}</div><table><thead><tr><th>ID</th><th>Imię i nazwisko</th><th>Data</th><th>Godzin</th><th>Powód</th><th>Status</th></tr></thead><tbody>${rows || '<tr><td colspan="6">Brak danych</td></tr>'}</tbody><tfoot><tr><td colspan="3">Suma</td><td style="text-align:right">${total.toFixed(2)}</td><td colspan="2"></td></tr></tfoot></table><script>window.onload=()=>setTimeout(()=>window.print(),300);<\/script></body></html>`; const doc=$('#pdfFrame').contentWindow.document; doc.open(); doc.write(html); doc.close(); }
+
+  const Calendar={ current:new Date(), selected:todayYMD(), mount(el){ this.el=el; $('#otDate').value=this.selected; this.render(); $('#otDate').addEventListener('change',e=>{ this.selected=e.target.value||this.selected; this.current=new Date(this.selected+'T00:00:00'); this.render(); }); }, ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }, render(){ const host=this.el; const cur=new Date(this.current.getFullYear(),this.current.getMonth(),1); const month=cur.getMonth(); const monthName=cur.toLocaleString('pl-PL',{month:'long',year:'numeric'}); const firstDow=(cur.getDay()+6)%7; const gridStart=new Date(cur); gridStart.setDate(1-firstDow); let html=`<div class="cal-head"><div class="cal-nav"><button id="calPrev">&#x2039;</button><button id="calToday">Dziś</button><button id="calNext">&#x203A;</button></div><div>${monthName.charAt(0).toUpperCase()+monthName.slice(1)}</div></div>`; const wd=['Pn','Wt','Śr','Cz','Pt','So','Nd']; html+='<div class="cal-grid">'+wd.map(d=>`<div class="cal-cell head">${d}</div>`).join(''); const today=todayYMD(); let d=new Date(gridStart); for(let i=0;i<42;i++){ const ymd=this.ymd(d); const inMonth=d.getMonth()===month; const cls=['cal-cell']; if(!inMonth)cls.push('muted'); if(ymd===today)cls.push('today'); if(ymd===this.selected)cls.push('sel'); html+=`<div class="${cls.join(' ')}" data-date="${ymd}">${d.getDate()}</div>`; d.setDate(d.getDate()+1); } html+='</div>'; host.innerHTML=html; host.querySelector('#calPrev').onclick=()=>{ this.current.setMonth(this.current.getMonth()-1); this.render(); }; host.querySelector('#calNext').onclick=()=>{ this.current.setMonth(this.current.getMonth()+1); this.render(); }; host.querySelector('#calToday').onclick=()=>{ this.current=new Date(); this.selected=todayYMD(); $('#otDate').value=this.selected; this.render(); }; host.querySelectorAll('.cal-cell').forEach(c=>{ if(c.classList.contains('head'))return; c.onclick=()=>{ this.selected=c.getAttribute('data-date'); $('#otDate').value=this.selected; this.current=new Date(this.selected+'T00:00:00'); this.render(); }; }); } };
+  const RangeCal={ start:null, end:null, a:new Date(), b:new Date(),
+    mount(aEl,bEl){ this.aEl=aEl; this.bEl=bEl; this.a.setMonth(this.a.getMonth()-1); this.render(); },
+    ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); },
+    monthGrid(cur, side){ const month=cur.getMonth(); const monthName=cur.toLocaleString('pl-PL',{month:'long',year:'numeric'}); const firstDow=(cur.getDay()+6)%7; const gridStart=new Date(cur); gridStart.setDate(1-firstDow); let html=`<div class="cal-head"><div class="cal-nav"><button data-nav="${side}:-1">&#x2039;</button><button data-today="${side}">Dziś</button><button data-nav="${side}:1">&#x203A;</button></div><div>${monthName.charAt(0).toUpperCase()+monthName.slice(1)}</div></div>`; const wd=['Pn','Wt','Śr','Cz','Pt','So','Nd']; html+='<div class="cal-grid">'+wd.map(d=>`<div class="cal-cell head">${d}</div>`).join(''); const today=todayYMD(); let d=new Date(gridStart); for(let i=0;i<42;i++){ const ymd=this.ymd(d); const inMonth=d.getMonth()===month; const cls=['cal-cell']; if(!inMonth)cls.push('muted'); if(ymd===today)cls.push('today'); if(this.start&&ymd===this.start)cls.push('sel'); if(this.end&&ymd===this.end)cls.push('sel'); if(this.start&&this.end&&ymd>this.start&&ymd<this.end)cls.push('inrange'); html+=`<div class="${cls.join(' ')}" data-side="${side}" data-date="${ymd}">${d.getDate()}</div>`; d.setDate(d.getDate()+1); } html+='</div>'; return html; },
+    render(){ this.aEl.innerHTML=this.monthGrid(this.a,'A'); this.b=new Date(this.a); this.b.setMonth(this.a.getMonth()+1); this.bEl.innerHTML=this.monthGrid(this.b,'B'); const bind=(root)=>{ root.querySelectorAll('[data-nav]').forEach(btn=>btn.onclick=()=>{ const [side,dir]=btn.getAttribute('data-nav').split(':'); this.a.setMonth(this.a.getMonth()+Number(dir)); this.render(); }); root.querySelectorAll('[data-today]').forEach(btn=>btn.onclick=()=>{ this.a=new Date(); this.a.setMonth(this.a.getMonth()-1); this.render(); }); root.querySelectorAll('.cal-cell').forEach(c=>{ if(c.classList.contains('head'))return; c.onclick=()=>{ const d=c.getAttribute('data-date'); if(!this.start|| (this.start&&this.end)){ this.start=d; this.end=null; } else { if(d<this.start){ this.end=this.start; this.start=d; } else { this.end=d; } } $('#fFrom').value=this.start||''; $('#fTo').value=this.end||''; this.render(); }; }); }; bind(this.aEl); bind(this.bEl); }
+  };
+
+  function attachEmpQuickList(){ $$('#empList .emp-item').forEach(btn=>btn.onclick=()=>{ State.user={role:'emp', id:btn.dataset.id}; toEmp(); }); }
+  function logout(){ State.user=null; setWho(); setView('login'); }
+  function toEmp(){ setView('emp'); renderEmp(); setWho(); }
+  function toMgr(){ setView('mgr'); renderMgr(); setWho(); }
+
+  function bind(){
+    $('#tab-emp').onclick=()=>{ $('#tab-emp').classList.remove('secondary'); $('#tab-emp').classList.add('pending'); $('#tab-mgr').classList.add('secondary'); $('#tab-mgr').classList.remove('pending'); $('#login-emp').classList.remove('hidden'); $('#login-mgr').classList.add('hidden'); attachEmpQuickList(); };
+    $('#tab-mgr').onclick=()=>{ $('#tab-mgr').classList.remove('secondary'); $('#tab-mgr').classList.add('pending'); $('#tab-emp').classList.add('secondary'); $('#tab-emp').classList.remove('pending'); $('#login-mgr').classList.remove('hidden'); $('#login-emp').classList.add('hidden'); };
+
+    const empLogin=()=>{ const id=$('#empId').value.trim(); if(!validateEmpId(id)) { alert('Wpisz poprawne ID (6 cyfr).'); return; } State.user={role:'emp', id}; $('#empId').value=''; toEmp(); };
+    $('#empLoginBtn').onclick=empLogin; $('#empId').onkeydown=e=>{ if(e.key==='Enter') empLogin(); };
+
+    const mgrLogin=()=>{ const pin=$('#mgrPin').value.trim(); if(pin!=='1234') { alert('Niepoprawny PIN.'); return; } State.user={role:'mgr'}; $('#mgrPin').value=''; toMgr(); };
+    $('#mgrLoginBtn').onclick=mgrLogin; $('#mgrPin').onkeydown=e=>{ if(e.key==='Enter') mgrLogin(); };
+
+    $('#logoutBtn').onclick=logout;
+
+    $('#addOTBtn').onclick=()=>{ const date=$('#otDate').value||Calendar.selected; const hours=parseFloat($('#otHours').value); const description=$('#otDesc').value; if(!date){ alert('Wybierz dzień.'); return; } if(!hours||hours<=0){ alert('Podaj liczbę godzin (> 0).'); return; } addEntry({employeeId:State.user.id,date,hours,description}); $('#empMsg').textContent='Zapisano wniosek.'; setTimeout(()=>$('#empMsg').textContent='',1500); $('#otHours').value=''; $('#otDesc').value=''; renderEmp(); };
+
+    $('#empExportBtn').onclick=()=>{ const list=filterEntries({empId:State.user.id}); exportToPDF(list, `Nadgodziny — ${State.user.id} • ${empName(State.user.id)}`); };
+    $('#applyFiltersBtn').onclick=renderMgr;
+    $('#mgrExportBtn').onclick=()=>{ const empId=$('#fEmpId').value.trim(); const status=$('#fStatus').value; const from=$('#fFrom').value||null; const to=$('#fTo').value||null; const list=filterEntries({empId,status,from,to}); const title=['Nadgodziny — zestawienie']; if(empId) title.push(`ID ${empId} • ${empName(empId)}`); if(from||to) title.push(`zakres ${from||'…'} — ${to||'…'}`); exportToPDF(list, title.join(' | ')); };
+
+    $('#toggleRangeCal').onclick=()=>{ $('#rangeCalWrap').classList.toggle('hidden'); RangeCal.mount($('#rcalA'), $('#rcalB')); };
+    $('#clearRange').onclick=()=>{ $('#fFrom').value=''; $('#fTo').value=''; RangeCal.start=null; RangeCal.end=null; RangeCal.render(); };
+    attachEmpQuickList();
+  }
+
+  function setupSW(){ if('serviceWorker' in navigator) window.addEventListener('load', ()=>navigator.serviceWorker.register('./sw.js').catch(()=>{})); }
+  function boot(){ load(); bind(); setWho(); setView('login'); setupSW(); Calendar.mount($('#cal')); $('#otDate').value=todayYMD(); }
+
+  boot();
+})();
+</script>
+</body></html>
