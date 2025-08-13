@@ -14,12 +14,21 @@
     "asar": true,
     "files": ["web/**", "main.js", "icon.png"],
     "directories": { "buildResources": "." },
-    "win": { "target": ["nsis"], "artifactName": "Rejestr-Nadgodzin-${version}-win.exe", "icon": "icon.png" },
-    "nsis": { "oneClick": true, "perMachine": false, "allowElevation": true, "allowToChangeInstallationDirectory": false },
-    "electronVersion": "30.0.8"                // <<< kluczowe
+    "win": {
+      "target": ["nsis"],
+      "artifactName": "Rejestr-Nadgodzin-${version}-win.exe",
+      "icon": "icon.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "allowElevation": true,
+      "allowToChangeInstallationDirectory": false
+    },
+    "electronVersion": "30.0.8"
   },
   "devDependencies": {
-    "electron": "30.0.8",                      // <<< kluczowe (bez ^)
+    "electron": "30.0.8",
     "electron-builder": "24.13.3"
   }
 }
