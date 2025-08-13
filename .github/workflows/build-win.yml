@@ -8,7 +8,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    container: electronuserland/builder:wine   # Linux + Wine + NSIS
+    container: electronuserland/builder:wine  # Linux + Wine + NSIS
 
     steps:
       - name: Checkout
@@ -21,18 +21,29 @@ jobs:
 
       - name: Clear caches (electron/electron-builder)
         run: |
-          rm -rf ~/.cache/electron ~/.cache/electron-builder /root/.cache/electron /root/.cache/electron-builder
+          rm -rf ~/.cache/electron ~/.cache/electron-builder \
+                 /root/.cache/electron /root/.cache/electron-builder \
+                 node_modules
 
       - name: Install deps
-        run: npm ci || npm install --no-audit --no-fund --legacy-peer-deps
+        run: npm install --no-audit --no-fund --legacy-peer-deps
 
-      - name: Build EXE (NSIS)
+      # 1) ZAWSZE budujemy portable (działający .exe bez instalatora)
+      - name: Build portable EXE
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/   # stabilne źródło binarek
+          ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
+        run: npx electron-builder --win portable --publish never
+
+      # 2) PRÓBUJEMY też NSIS (jeśli padnie, job i tak przejdzie)
+      - name: Build NSIS installer (best effort)
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_MIRROR: https://github.com/electron/electron/releases/download/
         run: npx electron-builder --win nsis --publish never
 
-      - name: Upload artifact
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: Rejestr-Nadgodzin-Windows-EXE
