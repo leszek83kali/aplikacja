@@ -8,26 +8,28 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    # Oficjalny obraz electron-builder z Wine do budowy Windows EXE na Linuksie
-    container: electronuserland/builder:wine
+    container: electronuserland/builder:wine   # Linux + Wine + NSIS
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node 18
         uses: actions/setup-node@v4
         with:
           node-version: 18
 
-      - name: Install deps
+      - name: Clear caches (electron/electron-builder)
         run: |
-          npm ci || npm install --no-audit --no-fund --legacy-peer-deps
+          rm -rf ~/.cache/electron ~/.cache/electron-builder /root/.cache/electron /root/.cache/electron-builder
 
-      # Budowa instalatora .exe (NSIS) bez publikacji do Releases
+      - name: Install deps
+        run: npm ci || npm install --no-audit --no-fund --legacy-peer-deps
+
       - name: Build EXE (NSIS)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ELECTRON_MIRROR: https://npmmirror.com/mirrors/electron/   # stabilne źródło binarek
         run: npx electron-builder --win nsis --publish never
 
       - name: Upload artifact
