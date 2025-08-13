@@ -6,35 +6,20 @@
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "build:win": "electron-builder -w nsis"
+    "build:win": "electron-builder -w nsis",
+    "build:mac": "electron-builder -m dmg"
   },
   "build": {
     "appId": "pl.twojaorganizacja.nadgodziny",
     "asar": true,
-    "files": [
-      "web/**",
-      "main.js",
-      "icon.png"
-    ],
-    "directories": {
-      "buildResources": "."
-    },
-    "win": {
-      "target": [
-        "nsis"
-      ],
-      "artifactName": "Rejestr-Nadgodzin-${version}-win.exe",
-      "icon": "icon.png"
-    },
-    "nsis": {
-      "oneClick": true,
-      "perMachine": false,
-      "allowElevation": true,
-      "allowToChangeInstallationDirectory": false
-    }
+    "files": ["web/**", "main.js", "icon.png"],
+    "directories": { "buildResources": "." },
+    "win": { "target": ["nsis"], "artifactName": "Rejestr-Nadgodzin-${version}-win.exe", "icon": "icon.png" },
+    "nsis": { "oneClick": true, "perMachine": false, "allowElevation": true, "allowToChangeInstallationDirectory": false },
+    "electronVersion": "30.0.8"                // <<< kluczowe
   },
   "devDependencies": {
-    "electron": "^30.0.0",
-    "electron-builder": "^24.13.3"
+    "electron": "30.0.8",                      // <<< kluczowe (bez ^)
+    "electron-builder": "24.13.3"
   }
 }
